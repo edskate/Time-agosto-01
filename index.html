@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Escala de Dançarinos - Agosto 2025</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f2f2;
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+    }
+    #trocar-nomes, #botoes {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .input-nome {
+      margin: 5px;
+    }
+    input[type="text"] {
+      padding: 5px;
+      width: 180px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #333;
+      color: white;
+    }
+    .editable {
+      cursor: pointer;
+    }
+    .banda {
+      background-color: #cce5ff;
+      font-weight: bold;
+    }
+    .folga {
+      background-color: #eee;
+      color: #888;
+    }
+    .verde {
+      background-color: #d4edda;
+    }
+    .laranja {
+      background-color: #ffe5b4;
+    }
+    .neutro {
+      background-color: #f9f9f9;
+    }
+    .editado {
+      background-color: #ccff99 !important;
+    }
+    .editado-data {
+      color: #4caf50;
+      font-weight: bold;
+    }
+    .confirmado {
+      background-color: #a0f0a0 !important;
+    }
+    .historico {
+      margin-top: 20px;
+      background: #fff;
+      border: 1px solid #aaa;
+      padding: 10px;
+    }
+    button {
+      padding: 8px 15px;
+      margin: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h2>Escala de Dançarinos - Agosto 2025</h2>
+
+  <div id="trocar-nomes">
+    <div class="input-nome">
+      <label>João: </label><input type="text" id="nomeJoao" placeholder="Novo nome João" />
+      <label>Maurício: </label><input type="text" id="nomeMauricio" placeholder="Novo nome Maurício" />
+      <label>Renan: </label><input type="text" id="nomeRenan" placeholder="Novo nome Renan" />
+      <label>Abizael: </label><input type="text" id="nomeAbizael" placeholder="Novo nome Abizael" />
+    </div>
+  </div>
+
+  <div id="botoes">
+    <button onclick="salvarPDF()">Salvar em PDF</button>
+    <button onclick="limparAtividades()">Limpar e Corrigir</button>
+    <button onclick="resetarPagina()">Resetar Página</button>
+  </div>
+
+  <div id="tabela-container">
+    <table id="escala">
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Dia da Semana</th>
+          <th>Atividade</th>
+          <th>Confirmar</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="historico" class="historico">
+    <strong>Histórico de Salvamento:</strong>
+    <ul id="lista-historico"></ul>
+  </div>
+
+  <script>
+    let dançarinos = ['João', 'Maurício', 'Renan', 'Abizael'];
+    let contagem = {};
+
+    function escolherDancarinos(qtd, excluir = []) {
+      const disponiveis = dançarinos.filter(d => !excluir.includes(d)).sort((a, b) => contagem[a] - contagem[b]);
+      const escolhidos = disponiveis.slice(0, qtd);
+      escolhidos.forEach(d => contagem[d]++);
+      return escolhidos;
+    }
+
+    function gerarEscala() {
+      const tbody = document.querySelector("#escala tbody");
+      tbody.innerHTML = '';
+      contagem = {};
+      dançarinos.forEach(d => contagem[d] = 0);
+
+      for (let dia = 1; dia <= 31; dia++) {
+        const data = new Date(2025, 7, dia);
+        if (data.getMonth() !== 7) continue;
+
+        const diaSemana = data.toLocaleDateString('pt-BR', { weekday: 'long' });
+        const dataStr = data.toLocaleDateString('pt-BR');
+        const abizael = dançarinos[3];
+
+        const tr = document.createElement('tr');
+        const tdData = document.createElement('td');
+        const tdDia = document.createElement('td');
+        const tdAtividade = document.createElement('td');
+        const tdCheck = document.createElement('td');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+
+        checkbox.addEventListener('change', function () {
+          if (this.checked) {
+            tdAtividade.classList.add('confirmado');
+          } else {
+            tdAtividade.classList.remove('confirmado');
+          }
+        });
+
+        tdData.textContent = dataStr;
+        tdDia.textContent = diaSemana;
+        tdAtividade.classList.add('editable');
+
+        if (diaSemana === 'quarta-feira') {
+          tdAtividade.textContent = 'Folga';
+          tdAtividade.className = 'folga';
+        } else if (diaSemana === 'sexta-feira') {
+          const outros = escolherDancarinos(2, [abizael]);
+          contagem[abizael]++;
+          const pocketShow = [abizael, ...outros];
+          tdAtividade.textContent = `🎭 Pocket Show: ${pocketShow.join(', ')}`;
+          tdAtividade.classList.add('laranja');
+
+          const trBanda = document.createElement('tr');
+          dançarinos.forEach(d => contagem[d]++);
+          trBanda.innerHTML = `
+            <td class="editado-data">${dataStr}</td>
+            <td>${diaSemana}</td>
+            <td class="banda">🎸 Ensaio da Banda: ${dançarinos.join(', ')}</td>
+            <td></td>
+          `;
+          tr.appendChild(tdData);
+          tr.appendChild(tdDia);
+          tr.appendChild(tdAtividade);
+          tdCheck.appendChild(checkbox);
+          tr.appendChild(tdCheck);
+          tbody.appendChild(tr);
+          tbody.appendChild(trBanda);
+          continue;
+        } else if (['segunda-feira', 'terça-feira'].includes(diaSemana)) {
+          const escolhido = escolherDancarinos(1, [abizael])[0];
+          contagem[abizael]++;
+          tdAtividade.textContent = `${abizael}, ${escolhido}`;
+          tdAtividade.classList.add('verde');
+        } else {
+          tdAtividade.textContent = 'Sem atividade';
+          tdAtividade.classList.add('neutro');
+        }
+
+        tr.appendChild(tdData);
+        tr.appendChild(tdDia);
+        tr.appendChild(tdAtividade);
+        tdCheck.appendChild(checkbox);
+        tr.appendChild(tdCheck);
+        tbody.appendChild(tr);
+      }
+    }
+
+    document.addEventListener('click', function (e) {
+      if (e.target.classList.contains('editable')) {
+        const td = e.target;
+        const tr = td.parentElement;
+        const tdData = tr.children[0];
+        const novo = prompt("Editar atividade:", td.textContent);
+        if (novo !== null && novo.trim() !== '') {
+          td.textContent = novo;
+          td.classList.add('editado');
+          tdData.classList.add('editado-data');
+        }
+      }
+    });
+
+    function atualizarNomes() {
+      const j = document.getElementById('nomeJoao').value.trim() || 'João';
+      const m = document.getElementById('nomeMauricio').value.trim() || 'Maurício';
+      const r = document.getElementById('nomeRenan').value.trim() || 'Renan';
+      const a = document.getElementById('nomeAbizael').value.trim() || 'Abizael';
+      dançarinos = [j, m, r, a];
+      gerarEscala();
+    }
+
+    ['nomeJoao', 'nomeMauricio', 'nomeRenan', 'nomeAbizael'].forEach(id =>
+      document.getElementById(id).addEventListener('input', atualizarNomes)
+    );
+
+    function salvarPDF() {
+      const element = document.getElementById('tabela-container');
+      const options = {
+        margin: 0.5,
+        filename: `escala_dancarinos_agosto_2025.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+      html2pdf().set(options).from(element).save();
+
+      const totalConfirmados = document.querySelectorAll('.confirmado').length;
+      const data = new Date().toLocaleString('pt-BR');
+      const li = document.createElement('li');
+      li.textContent = `Salvo em ${data} – Atividades confirmadas: ${totalConfirmados}`;
+      document.getElementById('lista-historico').appendChild(li);
+    }
+
+    function limparAtividades() {
+      document.querySelectorAll('.editado, .confirmado, .editado-data').forEach(el => {
+        el.classList.remove('editado', 'confirmado', 'editado-data');
+      });
+    }
+
+    function resetarPagina() {
+      location.reload();
+    }
+
+    gerarEscala();
+  </script>
+</body>
+</html>
